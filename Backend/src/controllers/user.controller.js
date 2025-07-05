@@ -6,7 +6,60 @@ import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
 
+export const login = async (req, res) => {
+  const { email, password } = req.body;
 
+  try {
+    const { success, error } = loginSchema.safeParse({
+      email: email,
+      password: password,
+    });
+
+    if (!success) {
+      return res.status(401).json({
+        message: "Invalid input data",
+        success: false,
+        error: error,
+      });
+    }
+
+    const user = await UserDb.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found / Try to SignUp first",
+        success: false,
+      });
+    }
+
+    const checkPass = await comparePassword(password, user.password);
+    if (checkPass) {
+      generateToken(user, res);
+
+      return res.status(201).json({
+        message: "User login successfully",
+        success: true,
+        user: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          profileImg: user.profileImg,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        message: "Password is incorrect",
+        success: false,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
