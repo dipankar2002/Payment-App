@@ -6,6 +6,7 @@ import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
 
+// Login, SignUp and Logout Routes
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -122,6 +123,21 @@ export const signUp = async (req, res) => {
         success: false,
       });
     }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
+export const logout = async (req, res) => {
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json({
+      message: "Logout successfull",
+      success: true,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal server error",
