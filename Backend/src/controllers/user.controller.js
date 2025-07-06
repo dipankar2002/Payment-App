@@ -6,6 +6,62 @@ import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
 
+export const updateUserDetails = async (req, res) => {
+  const { firstName, lastName, email } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const { success, error } = updateBody.safeParse({
+      email: email ? email : null,
+      firstName: firstName ? firstName : null,
+      lastName: lastName ? lastName : null,
+    });
+    if (!success) {
+      return res.status(411).json({
+        message: "Invalid input data",
+        success: false,
+        error: error,
+      });
+    }
+
+    const user = await UserDb.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const updateUser = await UserDb.findByIdAndUpdate(
+      userId,
+      {
+        firstName: firstName ? firstName : user.firstName,
+        lastName: lastName ? lastName : user.lastName,
+        email: email ? email : user.email,
+      },
+      { new: true }
+    ).select("-password -__v");
+
+    if (!updateUser) {
+      return res.status(400).json({
+        message: "User update failed",
+        success: false,
+      });
+    }
+
+    res.status(200).json({
+      message: "User details updated successfully",
+      success: true,
+      user: updateUser,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 
 // Get Users Routes
 export const users = async (req, res) => {
