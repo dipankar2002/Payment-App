@@ -1,11 +1,47 @@
-
+import cloudinary from "../lib/cloudinary.js";
 import { comparePassword, hashPassword } from "../lib/hashPass.js";
 import { generateToken } from "../lib/utils.js";
 import AccountDb from "../model/account.model.js";
 import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
+export const updateProfileImage = async (req, res) => {
+  const { profileImg } = req.body;
+  const userId = req.user._id;
 
+  try {
+    if (!profileImg) {
+      const updateUser = await UserDb.findByIdAndUpdate(
+        userId,
+        { profileImg: "" },
+        { new: true }
+      ).select("-password -__v");
+      return res.status(200).json({
+        message: "Profile image removed successfully",
+        success: true,
+        user: updateUser,
+      });
+    }
+
+    const updateRes = await cloudinary.uploader.upload(profileImg);
+    const updateUser = await UserDb.findByIdAndUpdate(
+      userId,
+      { profileImg: updateRes.secure_url },
+      { new: true }
+    ).select("-password -__v");
+    res.status(200).json({
+      message: "Profile image upload successfull",
+      success: true,
+      user: updateUser,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 export const updateUserDetails = async (req, res) => {
   const { firstName, lastName, email } = req.body;
   const userId = req.user._id;
