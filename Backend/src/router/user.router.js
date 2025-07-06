@@ -4,6 +4,7 @@ import {
   login,
   logout,
   signUp,
+  updateProfileImage,
   updateUserDetails,
   users,
 } from "../controllers/user.controller.js";
@@ -11,6 +12,7 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+router.put("/updateProfileImg", authMiddleware, updateProfileImage);
 router.put("/updateUserDetails", authMiddleware, updateUserDetails);
 
 router.get("/check", authMiddleware, checkUser);
