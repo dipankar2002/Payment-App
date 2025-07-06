@@ -6,6 +6,61 @@ import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
 
+
+// Get Users Routes
+export const users = async (req, res) => {
+  const filter = req.query.filter || "";
+
+  try {
+    if (filter) {
+      const filterUsers = await UserDb.find({
+        $or: [
+          {
+            firstName: { $regex: filter, $options: "i" },
+          },
+          {
+            lastName: { $regex: filter, $options: "i" },
+          },
+        ],
+      }).select("-password -__v");
+
+      return res.status(200).json({
+        message: "Filter users fetch successfull",
+        success: true,
+        user: filterUsers,
+      });
+    }
+
+    const allUsers = await UserDb.find().select("-password -__v");
+    res.status(200).json({
+      message: "All users fetch successfull",
+      success: true,
+      user: allUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
+export const checkUser = async (req, res) => {
+  try {
+    res.status(200).json({
+      message: "User fetch successfull",
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
+
 // Login, SignUp and Logout Routes
 export const login = async (req, res) => {
   const { email, password } = req.body;
