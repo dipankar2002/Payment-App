@@ -1,6 +1,7 @@
 import express from "express";
 import {
   checkUser,
+  deleteUser,
   login,
   logout,
   signUp,
@@ -12,6 +13,8 @@ import {
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
+
+router.delete("/deleteUser", authMiddleware, deleteUser);
 
 router.put("/updateUserPassword", authMiddleware, updateUserPassword);
 router.put("/updateProfileImg", authMiddleware, updateProfileImage);
