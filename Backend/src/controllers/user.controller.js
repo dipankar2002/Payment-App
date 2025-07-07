@@ -5,6 +5,63 @@ import AccountDb from "../model/account.model.js";
 import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
+// Delete User Route
+export const deleteUser = async (req, res) => {
+  const { email, password } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const { success, error } = loginSchema.safeParse({
+      email: email,
+      password: password,
+    });
+
+    if (!success) {
+      return res.status(401).json({
+        message: "Invalid input data",
+        success: false,
+        error: error,
+      });
+    }
+
+    const user = await UserDb.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    if (user.email !== email) {
+      return res.status(400).json({
+        message: "Email is incorrect",
+        success: false,
+      });
+    }
+
+    const checkPass = await comparePassword(password, user.password);
+    if (!checkPass) {
+      return res.status(400).json({
+        message: "Password is incorrect",
+        success: false,
+      });
+    }
+    await UserDb.findByIdAndDelete(userId);
+    await AccountDb.findOneAndDelete({ userId: userId });
+
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json({
+      message: "User deleted successfully",
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 
 // Update User Routes
 export const updateUserPassword = async (req, res) => {
