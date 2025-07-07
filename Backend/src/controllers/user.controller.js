@@ -5,6 +5,44 @@ import AccountDb from "../model/account.model.js";
 import UserDb from "../model/user.model.js";
 import { loginSchema, signUpSchema, updateBody } from "../zod/user.zod.js";
 
+
+// Update User Routes
+export const updateUserPassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const user = await UserDb.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const checkPass = await comparePassword(oldPassword, user.password);
+    if (!checkPass) {
+      return res.status(400).json({
+        message: "Old password is incorrect",
+        success: false,
+      });
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    await UserDb.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 export const updateProfileImage = async (req, res) => {
   const { profileImg } = req.body;
   const userId = req.user._id;
