@@ -74,6 +74,27 @@ export const transfer = async (req, res) => {
   }
 };
 
+export const getTransactionHistory = async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const transactions = await TransactionDb.find({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+    }).select("-__v");
+
+    res.status(200).json({
+      message: "Transaction history retrieved successfully",
+      success: true,
+      transactions: transactions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error,
+    });
+  }
+};
 export const getAccountBalance = async (req, res) => {
   const userId = req.user._id;
 
